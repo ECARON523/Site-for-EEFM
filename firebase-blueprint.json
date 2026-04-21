@@ -1,0 +1,92 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile information",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "avatar": { "type": "string" },
+        "role": { "type": "string", "enum": ["user", "admin"] },
+        "followersCount": { "type": "number" },
+        "followingIds": { "type": "array", "items": { "type": "string" } },
+        "likedRecipeIds": { "type": "array", "items": { "type": "string" } },
+        "savedRecipeIds": { "type": "array", "items": { "type": "string" } },
+        "pinnedRecipeIds": { "type": "array", "items": { "type": "string" } },
+        "bio": { "type": "string" }
+      },
+      "required": ["id", "name", "avatar", "role", "followersCount", "followingIds"]
+    },
+    "Recipe": {
+      "title": "Recipe",
+      "description": "Recipe details",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "category": { "type": "string" },
+        "prepTime": { "type": "number" },
+        "cookTime": { "type": "number" },
+        "difficulty": { "type": "number" },
+        "spiciness": { "type": "number" },
+        "cuisine": { "type": "string" },
+        "allergens": { "type": "array", "items": { "type": "string" } },
+        "portions": { "type": "number" },
+        "ingredients": { "type": "array", "items": { "$ref": "Ingredient" } },
+        "steps": { "type": "array", "items": { "$ref": "RecipeStep" } },
+        "nutritionalInfo": { "$ref": "NutritionalInfo" },
+        "authorId": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
+        "views": { "type": "number" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["title", "description", "imageUrl", "category", "prepTime", "cookTime", "difficulty", "portions", "ingredients", "nutritionalInfo", "authorId", "status", "views", "createdAt"]
+    },
+    "Ingredient": {
+      "title": "Ingredient",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "amount": { "type": "number" },
+        "unit": { "type": "string" },
+        "weightGrams": { "type": "number" },
+        "imageUrl": { "type": "string" },
+        "category": { "type": "string" }
+      }
+    },
+    "RecipeStep": {
+      "title": "RecipeStep",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "order": { "type": "number" },
+        "description": { "type": "string" },
+        "imageUrl": { "type": "string" }
+      }
+    },
+    "NutritionalInfo": {
+      "title": "NutritionalInfo",
+      "type": "object",
+      "properties": {
+        "calories": { "type": "number" },
+        "protein": { "type": "number" },
+        "fat": { "type": "number" },
+        "carbs": { "type": "number" }
+      }
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles"
+    },
+    "/recipes_v2/{recipeId}": {
+      "schema": "Recipe",
+      "description": "Recipe collection"
+    }
+  }
+}
