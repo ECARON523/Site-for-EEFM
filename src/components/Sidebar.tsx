@@ -8,7 +8,8 @@ import {
   HeartPulse, 
   Info,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  X
 } from 'lucide-react';
 
 const MENU_ITEMS = [
@@ -48,7 +49,7 @@ const MENU_ITEMS = [
   },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ isOpen, onClose }: { isOpen?: boolean, onClose?: () => void }) {
   const location = useLocation();
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
 
@@ -73,128 +74,155 @@ export default function Sidebar() {
     } else if (currentItem && !currentItem.subItems) {
       setExpandedItems({});
     }
+
+    // Закрываем мобильное меню при переходе
+    if (window.innerWidth < 1024 && onClose) {
+      onClose();
+    }
   }, [location.pathname]);
 
   return (
-    <aside className="w-64 shrink-0 hidden lg:block sticky top-24 h-[calc(100vh-6rem)] overflow-y-auto pr-4">
-      <nav className="space-y-1">
-        {MENU_ITEMS.map((item) => {
-          const isActive = location.pathname === item.path;
-          const isExpanded = expandedItems[item.label];
-          const isNonClickable = ['Полезные сервисы', 'О проекте'].includes(item.label);
-          
-          return (
-            <div key={item.label} className="mb-1">
-              {isNonClickable ? (
-                <div
-                  className={cn(
-                    "flex items-center justify-between px-3 py-3 rounded-xl transition-colors group cursor-default",
-                    isActive
-                      ? (item.label === 'Рецепты' ? "bg-bg-surface-light dark:bg-primary/5 font-medium" :
-                         item.label === 'Умный помощник' ? "bg-bg-surface-light dark:bg-green-500/5 font-medium" :
-                         item.label === 'Полезные сервисы' ? "bg-bg-surface-light dark:bg-red-500/5 font-medium" :
-                         item.label === 'О проекте' ? "bg-bg-surface-light dark:bg-indigo-500/5 font-medium" :
-                         "bg-bg-surface-light font-medium")
-                      : "text-text-muted"
-                  )}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={cn(
-                      "w-8 h-8 rounded-full flex items-center justify-center",
-                      item.label === 'Рецепты' ? 'bg-primary/20 text-primary dark:bg-primary/10' :
-                      item.label === 'Умный помощник' ? 'bg-green-500/20 text-green-600 dark:bg-green-500/10 dark:text-green-500' :
-                      item.label === 'Полезные сервисы' ? 'bg-red-500/20 text-red-600 dark:bg-red-500/10 dark:text-red-500' :
-                      item.label === 'О проекте' ? 'bg-indigo-500/20 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-500' :
-                      'bg-bg-surface-light text-text-muted'
-                    )}>
-                      <item.icon className="w-4 h-4" />
+    <>
+      {/* Затемнение фона для мобилок */}
+      {isOpen && (
+        <div className="fixed inset-0 bg-black/60 z-40 lg:hidden" onClick={onClose} />
+      )}
+
+      <aside className={cn(
+        "w-64 shrink-0 overflow-y-auto pr-4 z-50 transition-transform duration-300",
+        // Классы для мобилок (фиксируем слева)
+        "fixed inset-y-0 left-0 bg-bg-primary pt-4",
+        // ТВОИ ОРИГИНАЛЬНЫЕ классы для компа (всё вернул как было)
+        "lg:sticky lg:top-24 lg:h-[calc(100vh-6rem)] lg:block lg:bg-transparent lg:pt-0",
+        isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+      )}>
+        
+        {/* Кнопка закрытия ТОЛЬКО для телефонов */}
+        <div className="flex justify-end px-4 mb-4 lg:hidden">
+          <button onClick={onClose} className="p-2 text-text-muted hover:text-text-primary">
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+
+        <nav className="space-y-1">
+          {MENU_ITEMS.map((item) => {
+            const isActive = location.pathname === item.path;
+            const isExpanded = expandedItems[item.label];
+            const isNonClickable = ['Полезные сервисы', 'О проекте'].includes(item.label);
+            
+            return (
+              <div key={item.label} className="mb-1">
+                {isNonClickable ? (
+                  <div
+                    className={cn(
+                      "flex items-center justify-between px-3 py-3 rounded-xl transition-colors group cursor-default",
+                      isActive
+                        ? (item.label === 'Рецепты' ? "bg-bg-surface-light dark:bg-primary/5 font-medium" :
+                           item.label === 'Умный помощник' ? "bg-bg-surface-light dark:bg-green-500/5 font-medium" :
+                           item.label === 'Полезные сервисы' ? "bg-bg-surface-light dark:bg-red-500/5 font-medium" :
+                           item.label === 'О проекте' ? "bg-bg-surface-light dark:bg-indigo-500/5 font-medium" :
+                           "bg-bg-surface-light font-medium")
+                        : "text-text-muted"
+                    )}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={cn(
+                        "w-8 h-8 rounded-full flex items-center justify-center",
+                        item.label === 'Рецепты' ? 'bg-primary/20 text-primary dark:bg-primary/10' :
+                        item.label === 'Умный помощник' ? 'bg-green-500/20 text-green-600 dark:bg-green-500/10 dark:text-green-500' :
+                        item.label === 'Полезные сервисы' ? 'bg-red-500/20 text-red-600 dark:bg-red-500/10 dark:text-red-500' :
+                        item.label === 'О проекте' ? 'bg-indigo-500/20 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-500' :
+                        'bg-bg-surface-light text-text-muted'
+                      )}>
+                        <item.icon className="w-4 h-4" />
+                      </div>
+                      <span className={cn("text-[15px]", item.subItems ? "font-bold text-text-primary" : (isActive ? "font-medium text-text-primary" : "font-medium text-text-muted"))}>{item.label}</span>
                     </div>
-                    <span className={cn("text-[15px]", item.subItems ? "font-bold text-text-primary" : (isActive ? "font-medium text-text-primary" : "font-medium text-text-muted"))}>{item.label}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {item.badge && (
-                      <span className="bg-blue-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
-                        {item.badge}
-                      </span>
-                    )}
-                    {item.subItems && (
-                      <button 
-                        onClick={(e) => toggleExpand(item.label, e)}
-                        className="w-6 h-6 rounded-full flex items-center justify-center hover:bg-bg-surface-light transition-colors bg-bg-surface shadow-sm border border-border-color cursor-pointer"
-                      >
-                        {isExpanded ? <ChevronUp className="w-3.5 h-3.5 text-text-muted" /> : <ChevronDown className="w-3.5 h-3.5 text-text-muted" />}
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                <Link
-                  to={item.path}
-                  className={cn(
-                    "flex items-center justify-between px-3 py-3 rounded-xl transition-colors group",
-                    isActive
-                      ? (item.label === 'Рецепты' ? "bg-bg-surface-light dark:bg-primary/5 font-medium" :
-                         item.label === 'Умный помощник' ? "bg-bg-surface-light dark:bg-green-500/5 font-medium" :
-                         item.label === 'Полезные сервисы' ? "bg-bg-surface-light dark:bg-red-500/5 font-medium" :
-                         item.label === 'О проекте' ? "bg-bg-surface-light dark:bg-indigo-500/5 font-medium" :
-                         "bg-bg-surface-light font-medium")
-                      : "hover:bg-bg-surface-light text-text-muted"
-                  )}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={cn(
-                      "w-8 h-8 rounded-full flex items-center justify-center",
-                      item.label === 'Рецепты' ? 'bg-primary/20 text-primary dark:bg-primary/10' :
-                      item.label === 'Умный помощник' ? 'bg-green-500/20 text-green-600 dark:bg-green-500/10 dark:text-green-500' :
-                      item.label === 'Полезные сервисы' ? 'bg-red-500/20 text-red-600 dark:bg-red-500/10 dark:text-red-500' :
-                      item.label === 'О проекте' ? 'bg-indigo-500/20 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-500' :
-                      'bg-bg-surface-light text-text-muted'
-                    )}>
-                      <item.icon className="w-4 h-4" />
-                    </div>
-                    <span className={cn("text-[15px]", item.subItems ? "font-bold text-text-primary" : (isActive ? "font-medium text-text-primary" : "font-medium text-text-muted"))}>{item.label}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {item.badge && (
-                      <span className="bg-blue-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
-                        {item.badge}
-                      </span>
-                    )}
-                    {item.subItems && (
-                      <button 
-                        onClick={(e) => toggleExpand(item.label, e)}
-                        className="w-6 h-6 rounded-full flex items-center justify-center hover:bg-bg-surface-light transition-colors bg-bg-surface shadow-sm border border-border-color"
-                      >
-                        {isExpanded ? <ChevronUp className="w-3.5 h-3.5 text-text-muted" /> : <ChevronDown className="w-3.5 h-3.5 text-text-muted" />}
-                      </button>
-                    )}
-                  </div>
-                </Link>
-              )}
-              
-              {item.subItems && isExpanded && (
-                <div className="pl-[52px] pr-3 py-1 flex flex-col">
-                  {item.subItems.map(subItem => (
-                    <Link
-                      key={subItem.path}
-                      to={subItem.path}
-                      className={cn(
-                        "block py-2 text-[14px] transition-colors",
-                        location.pathname === subItem.path 
-                          ? "text-text-primary font-bold" 
-                          : "text-text-muted hover:text-text-primary"
+                    <div className="flex items-center gap-2">
+                      {item.badge && (
+                        <span className="bg-blue-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                          {item.badge}
+                        </span>
                       )}
-                    >
-                      {subItem.label}
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </nav>
-      
-    </aside>
+                      {item.subItems && (
+                        <button 
+                          onClick={(e) => toggleExpand(item.label, e)}
+                          className="w-6 h-6 rounded-full flex items-center justify-center hover:bg-bg-surface-light transition-colors bg-bg-surface shadow-sm border border-border-color cursor-pointer"
+                        >
+                          {isExpanded ? <ChevronUp className="w-3.5 h-3.5 text-text-muted" /> : <ChevronDown className="w-3.5 h-3.5 text-text-muted" />}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <Link
+                    to={item.path}
+                    className={cn(
+                      "flex items-center justify-between px-3 py-3 rounded-xl transition-colors group",
+                      isActive
+                        ? (item.label === 'Рецепты' ? "bg-bg-surface-light dark:bg-primary/5 font-medium" :
+                           item.label === 'Умный помощник' ? "bg-bg-surface-light dark:bg-green-500/5 font-medium" :
+                           item.label === 'Полезные сервисы' ? "bg-bg-surface-light dark:bg-red-500/5 font-medium" :
+                           item.label === 'О проекте' ? "bg-bg-surface-light dark:bg-indigo-500/5 font-medium" :
+                           "bg-bg-surface-light font-medium")
+                        : "hover:bg-bg-surface-light text-text-muted"
+                    )}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={cn(
+                        "w-8 h-8 rounded-full flex items-center justify-center",
+                        item.label === 'Рецепты' ? 'bg-primary/20 text-primary dark:bg-primary/10' :
+                        item.label === 'Умный помощник' ? 'bg-green-500/20 text-green-600 dark:bg-green-500/10 dark:text-green-500' :
+                        item.label === 'Полезные сервисы' ? 'bg-red-500/20 text-red-600 dark:bg-red-500/10 dark:text-red-500' :
+                        item.label === 'О проекте' ? 'bg-indigo-500/20 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-500' :
+                        'bg-bg-surface-light text-text-muted'
+                      )}>
+                        <item.icon className="w-4 h-4" />
+                      </div>
+                      <span className={cn("text-[15px]", item.subItems ? "font-bold text-text-primary" : (isActive ? "font-medium text-text-primary" : "font-medium text-text-muted"))}>{item.label}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {item.badge && (
+                        <span className="bg-blue-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                          {item.badge}
+                        </span>
+                      )}
+                      {item.subItems && (
+                        <button 
+                          onClick={(e) => toggleExpand(item.label, e)}
+                          className="w-6 h-6 rounded-full flex items-center justify-center hover:bg-bg-surface-light transition-colors bg-bg-surface shadow-sm border border-border-color"
+                        >
+                          {isExpanded ? <ChevronUp className="w-3.5 h-3.5 text-text-muted" /> : <ChevronDown className="w-3.5 h-3.5 text-text-muted" />}
+                        </button>
+                      )}
+                    </div>
+                  </Link>
+                )}
+                
+                {item.subItems && isExpanded && (
+                  <div className="pl-[52px] pr-3 py-1 flex flex-col">
+                    {item.subItems.map(subItem => (
+                      <Link
+                        key={subItem.path}
+                        to={subItem.path}
+                        className={cn(
+                          "block py-2 text-[14px] transition-colors",
+                          location.pathname === subItem.path 
+                            ? "text-text-primary font-bold" 
+                            : "text-text-muted hover:text-text-primary"
+                        )}
+                      >
+                        {subItem.label}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </nav>
+        
+      </aside>
+    </>
   );
 }

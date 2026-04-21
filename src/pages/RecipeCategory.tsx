@@ -9,77 +9,77 @@ import { cn } from '../lib/utils';
 const CATEGORY_DATA: Record<string, { title: string, image: string, keywords: string[], whatToCook: string[], popular: string[], description?: string }> = {
   breakfast: {
     title: 'ЗАВТРАК',
-    image: 'https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?auto=format&fit=crop&q=80&w=1000',
+    image: 'https://static.1000.menu/img/content-v2/21/62/89008/polnyi-angliiskii-zavtrak_1723808108_14_v5xiw0v_max.jpg',
     keywords: ['завтрак', 'яичниц', 'омлет', 'каш', 'блин', 'оладь', 'сырник'],
     whatToCook: ['Завтраки из яиц', 'Каши', 'Блины и оладьи', 'Сырники', 'Бутерброды'],
     popular: ['Просто', 'Быстро', 'Ваши рецепты', 'Полезно', 'Дети']
   },
   lunch: {
     title: 'ОБЕД',
-    image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=1000',
+    image: 'https://avatars.mds.yandex.net/i?id=2f450003cd1e99fb11d367f28be68f16a6ee7302-5257701-images-thumbs&n=13',
     keywords: ['обед', 'суп', 'борщ', 'второе', 'мясо', 'гарнир'],
     whatToCook: ['Первые блюда', 'Вторые блюда', 'Салаты', 'Гарниры'],
     popular: ['Сытно', 'Ваши рецепты', 'Русская кухня', 'Обед']
   },
   dinner: {
     title: 'УЖИН',
-    image: 'https://images.unsplash.com/photo-1559339352-11d035aa65de?auto=format&fit=crop&q=80&w=1000',
+    image: 'https://www.koolinar.ru/all_image/article/5/5342/article-9f042aae-a14d-4c98-8e2d-09bb4aa03ff3_large.jpg',
     keywords: ['ужин', 'легк', 'рыб', 'овощ', 'куриц', 'паст'],
     whatToCook: ['Легкий ужин', 'Блюда из птицы', 'Блюда из рыбы', 'Паста'],
     popular: ['Быстро', 'Ваши рецепты', 'Ужин', 'Романтика']
   },
   healthy: {
     title: 'ЗДОРОВАЯ ЕДА',
-    image: 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&q=80&w=1000',
+    image: 'https://avatars.mds.yandex.net/i?id=4026682aa5268956c548de2394387816_l-5873252-images-thumbs&n=13',
     keywords: ['пп', 'зож', 'здоров', 'диетич', 'без сахар', 'низкокалорийн'],
     whatToCook: ['Блюда на пару', 'Салаты', 'Овощные блюда', 'Смузи'],
     popular: ['ЗОЖ', 'Низкокалорийный', 'Полезно', 'Вегетарианское']
   },
   snacks: {
     title: 'ЗАКУСКИ',
-    image: 'https://images.unsplash.com/photo-1541529086526-db283c563270?auto=format&fit=crop&q=80&w=1000',
+    image: 'https://avatars.mds.yandex.net/i?id=0de1ec634bc127f4e01127399dded8a8_l-4960599-images-thumbs&n=13',
     keywords: ['закуск', 'бутерброд', 'канапе', 'паштет', 'ролл'],
     whatToCook: ['Закуски с хлебом или лавашем', 'Закуски с чесноком', 'Закуски с помидорами', 'Закуски из овощей и грибов', 'Закуски с рыбой', 'Закуски из сыра'],
     popular: ['Салаты с яйцом', 'Просто', 'Ваши рецепты', 'Есть распространенные аллергены', 'Закуски с хлебом или лавашем', 'Перекус']
   },
   salads: {
     title: 'САЛАТЫ',
-    image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&q=80&w=1000',
+    image: 'https://i.ytimg.com/vi/1ib4cs1tS1g/maxresdefault.jpg',
     keywords: ['салат', 'винегрет', 'оливье', 'цезарь'],
     whatToCook: ['Салаты с яйцом', 'Салаты с овощами', 'Салаты с майонезом', 'Салаты с чесноком', 'Овощные салаты', 'Салаты с растительным маслом'],
     popular: ['Салаты с яйцом', 'Салаты с овощами', 'Просто', 'Ваши рецепты', 'Есть распространенные аллергены', 'Ужин', 'Сборник рецептов']
   },
   soups: {
     title: 'ПЕРВЫЕ БЛЮДА',
-    image: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&q=80&w=1000',
+    image: 'https://img.povar.ru/mobile/a3/c5/ee/ef/postnii_sup_s_gribami-897522.jpg',
     keywords: ['суп', 'борщ', 'щи', 'солянка', 'бульон', 'окрошка', 'рассольник'],
     whatToCook: ['Супы', 'Борщ', 'Щи', 'Солянка', 'Крем-суп'],
     popular: ['Супы', 'Ваши рецепты', 'Просто', 'Обед', 'Сезон картошки', 'Сезон моркови', 'Есть распространенные аллергены', 'Русская кухня']
   },
   main: {
     title: 'ВТОРЫЕ БЛЮДА',
-    image: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&q=80&w=1000',
+    image: 'https://avatars.mds.yandex.net/i?id=a79d7c13f271a5123a8e4308deee066f4c568c00-5309142-images-thumbs&n=13',
     keywords: ['втор', 'мясн', 'куриц', 'говядин', 'свинин', 'рыб', 'котлет', 'пельмен', 'бефстроганов', 'гуляш', 'жарко'],
     whatToCook: ['Мучные вторые блюда', 'Мясные блюда', 'Блюда из птицы', 'Блюда из картофеля', 'Блюда из рыбы', 'Блюда из яиц', 'Блюда из круп'],
     popular: ['Салаты с яйцом', 'Ваши рецепты', 'Просто', 'Есть распространенные аллергены', 'Ужин', 'Обед', 'Русская кухня']
   },
   sides: {
     title: 'ГАРНИРЫ',
-    image: 'https://images.unsplash.com/photo-1534939561126-855b8675edd7?auto=format&fit=crop&q=80&w=1000',
+    image: 'https://avatars.mds.yandex.net/i?id=2258afc7c65d711646bc4fbd7d72b61cad111b47-5608305-images-thumbs&n=13',
     keywords: ['гарнир', 'пюре', 'рис', 'гречк', 'макарон', 'овощ', 'картофел'],
     whatToCook: ['Гарниры из овощей', 'Гарниры из круп', 'Гарниры со стручковой фасолью', 'Гарниры с красной фасолью', 'Гарниры с кускусом', 'Гарниры с белой фасолью'],
     popular: ['Салаты с яйцом', 'Ваши рецепты', 'Просто', 'Гарниры из овощей', 'Есть распространенные аллергены', 'Русская кухня', 'Низкокалорийный']
   },
   desserts: {
     title: 'ДЕСЕРТЫ',
-    image: 'https://images.unsplash.com/photo-1563729784474-d77dbb933a9e?auto=format&fit=crop&q=80&w=1000',
+    image: 'https://avatars.mds.yandex.net/i?id=5844e644714b792a5250bc58640c0bc9ab3703db-2032062-images-thumbs&n=13',
     keywords: ['десерт', 'торт', 'пирожн', 'морожен', 'сладк', 'крем', 'пудинг', 'желе'],
     whatToCook: ['Десерты из теста', 'Десерты со сметаной', 'Фруктовые десерты', 'Десерты с творогом', 'Торты', 'Холодные десерты', 'Варенье', 'Пирожные'],
     popular: ['Ваши рецепты', 'Просто', 'Есть распространенные аллергены', 'Сборник рецептов', 'Русская кухня', 'Десерты из теста', 'Перекус', 'Завтрак']
   },
   baking: {
     title: 'ВЫПЕЧКА',
-    image: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&q=80&w=1000',
+    image: 'https://avatars.mds.yandex.net/i?id=3006f19fb621eada1974a727a870924a_l-12461673-images-thumbs&n=13',
     description: 'Рецепты выпечки — как приготовить домашнюю выпечку: пироги, булочки, печенье, советы по дрожжевому тесту и безглютеновым вариантам. Читать далее',
     keywords: ['выпечк', 'пирог', 'блин', 'оладь', 'булочк', 'хлеб', 'печень', 'кекс', 'тест'],
     whatToCook: ['Выпечка с яйцом', 'Пироги', 'Выпечка с сыром', 'Выпечка с фруктами', 'Выпечка со сметаной', 'Выпечка из слоеного теста', 'Выпечка с творогом'],

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import { useUserStore } from '../store/useUserStore';
@@ -7,30 +7,63 @@ import RecipeCard from '../components/RecipeCard';
 import { RecipeCategory } from '../types';
 import { AdminEditModal } from '../components/AdminEditModal';
 import { RecipeCardSkeleton } from '../components/Skeleton';
-import { doc, updateDoc } from 'firebase/firestore';
-import { db } from '../lib/firebase';
 import Articles from './Articles';
-
-const CATEGORIES: { id: string; label: RecipeCategory; image: string }[] = [
-  { id: 'breakfast', label: 'Завтрак', image: 'https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?w=400&h=300&fit=crop' },
-  { id: 'lunch', label: 'Обед', image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=300&fit=crop' },
-  { id: 'dinner', label: 'Ужин', image: 'https://images.unsplash.com/photo-1559339352-11d035aa65de?w=400&h=300&fit=crop' },
-  { id: 'healthy', label: 'Здоровая еда', image: 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=400&h=300&fit=crop' },
-  { id: 'snacks', label: 'Закуски', image: 'https://images.unsplash.com/photo-1541529086526-db283c563270?w=400&h=300&fit=crop' },
-  { id: 'desserts', label: 'Десерты', image: 'https://images.unsplash.com/photo-1563729784474-d77dbb933a9e?w=400&h=300&fit=crop' },
-];
-
 import { MOCK_USERS } from '../data/mockData';
+
+// ДОБАВЛЕНЫ KEYWORDS ИЗ ТВОЕЙ СТРУКТУРЫ ДЛЯ УМНОГО ПОИСКА
+const CATEGORIES: { id: string; label: RecipeCategory; image: string; keywords: string[] }[] = [
+  { 
+    id: 'breakfast', 
+    label: 'Завтрак', 
+    image: 'https://avatars.mds.yandex.net/i?id=d062c59f18da50d4235819d5c01b69c1_l-10744014-images-thumbs&n=13',
+    keywords: ['завтрак', 'сырник', 'блин', 'каша', 'омлет', 'яичниц', 'мюсли', 'панкейк']
+  },
+  { 
+    id: 'lunch', 
+    label: 'Обед', 
+    image: 'https://avatars.mds.yandex.net/i?id=5fee187abb88ea4a11ec6d812c7ac38c_l-4477535-images-thumbs&n=13',
+    keywords: ['обед', 'суп', 'борщ', 'щи', 'горячее', 'второе', 'жарко', 'бульон']
+  },
+  { 
+    id: 'dinner', 
+    label: 'Ужин', 
+    image: 'https://www.koolinar.ru/all_image/article/5/5342/article-9f042aae-a14d-4c98-8e2d-09bb4aa03ff3_large.jpg',
+    keywords: ['ужин', 'мясо', 'рыба', 'куриц', 'запеканк', 'паста', 'спагетти', 'стейк']
+  },
+  { 
+    id: 'healthy', 
+    label: 'Здоровая еда', 
+    image: 'https://lnr-news.ru/img/20260225/37fd4d3da3aff77ef48d0678433cfadb.jpg',
+    keywords: ['здоров', 'пп', 'полезн', 'диетич', 'без сахара', 'веган', 'вегетариан', 'фитнес']
+  },
+  { 
+    id: 'snacks', 
+    label: 'Закуски', 
+    image: 'https://i.ytimg.com/vi/zlKdkGV4WAo/maxresdefault.jpg',
+    keywords: ['закуск', 'бутерброд', 'канапе', 'тост', 'рулет', 'тарталетк', 'чипс', 'снек']
+  },
+  { 
+    id: 'desserts', 
+    label: 'Десерты', 
+    image: 'https://avatars.mds.yandex.net/i?id=c14b9168ab27382c43189b759ed15f75be2442f9-5100742-images-thumbs&n=13',
+    keywords: ['десерт', 'торт', 'пирожн', 'морожен', 'сладк', 'крем', 'пудинг', 'желе']
+  },
+];
 
 export default function Home() {
   const { currentUser } = useAuthStore();
   const { users } = useUserStore();
   const { recipes, loading } = useRecipes();
+  
   const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get('tab') as 'Главная' | 'Рецепты' | 'Статьи' | null;
+  const categoryParam = searchParams.get('category'); 
+  
   const [activeTab, setActiveTab] = useState<'Главная' | 'Рецепты' | 'Статьи'>(tabParam || 'Главная');
   const [filter, setFilter] = useState<'all' | 'fast' | 'healthy'>('all');
   const [editModal, setEditModal] = useState<{isOpen: boolean; title: string; fields: any[]; onSave: (data: any) => void} | null>(null);
+  
+  const recipesGridRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (tabParam && tabParam !== activeTab) {
@@ -43,14 +76,42 @@ export default function Home() {
     setSearchParams({ tab });
   };
 
+  const handleCategoryClick = (categoryId: string) => {
+    setSearchParams({ tab: 'Рецепты', category: categoryId });
+    setTimeout(() => {
+      recipesGridRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  };
+
   const approvedRecipes = recipes.filter(r => r.status === 'approved');
   const isAdmin = currentUser?.role === 'admin';
+  const featuredRecipe = approvedRecipes[0]; 
 
-  const featuredRecipe = approvedRecipes[0]; // Simple hero
-
+  // УМНАЯ ЛОГИКА ФИЛЬТРАЦИИ С KEYWORDS
   const filteredRecipes = approvedRecipes.filter(r => {
-    if (filter === 'fast') return (r.prepTime + r.cookTime) <= 30;
-    if (filter === 'healthy') return r.category === 'Здоровая еда';
+    // 1. Проверяем кнопки "Все", "Быстро", "Здоровая еда"
+    if (filter === 'fast' && (r.prepTime + r.cookTime) > 30) return false;
+    if (filter === 'healthy' && !r.category.toLowerCase().includes('здоров')) return false;
+
+    // 2. Проверяем клик по плашке с учетом keywords (твоя логика)
+    if (categoryParam) {
+      const targetCategory = CATEGORIES.find(c => c.id === categoryParam);
+      if (targetCategory) {
+        // Ищем строгое совпадение категории
+        const exactMatch = r.category === targetCategory.label;
+        // Или совпадение по ключевым словам в названии, описании или категории
+        const keywordMatch = targetCategory.keywords.some(kw => {
+          const lowerKw = kw.toLowerCase();
+          return r.title.toLowerCase().includes(lowerKw) || 
+                 r.description.toLowerCase().includes(lowerKw) || 
+                 r.category.toLowerCase().includes(lowerKw);
+        });
+
+        // Если не совпало ни так, ни так — отбрасываем
+        if (!exactMatch && !keywordMatch) return false;
+      }
+    }
+
     return true;
   });
 
@@ -66,8 +127,6 @@ export default function Home() {
       return bLiked - aLiked || b.views - a.views;
     })
     .slice(0, 6);
-
-  const topAuthors = users.sort((a, b) => b.followersCount - a.followersCount).slice(0, 3);
 
   const handleEditSection = (
     title: string, 
@@ -146,9 +205,9 @@ export default function Home() {
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               {CATEGORIES.map((cat) => (
-                <Link 
+                <div 
                   key={cat.id} 
-                  to={`/recipes/${cat.id}`}
+                  onClick={() => handleCategoryClick(cat.id)}
                   className="relative rounded-2xl overflow-hidden aspect-[4/3] group cursor-pointer"
                 >
                   {cat.image && (
@@ -163,29 +222,49 @@ export default function Home() {
                   <div className="absolute bottom-4 left-4 text-white font-bold text-lg">
                     {cat.label}
                   </div>
-                </Link>
+                </div>
               ))}
             </div>
           </section>
 
           {/* Best Recipes Feed */}
-          <section>
+          <section ref={recipesGridRef} className="scroll-mt-24">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-black uppercase tracking-tight text-text-primary">Лучшие рецепты</h2>
-              <Link to="/recipes/all" className="text-sm text-text-muted hover:text-text-primary underline underline-offset-4">
-                Смотреть все
-              </Link>
+              <div className="flex items-center gap-4">
+                <h2 className="text-2xl font-black uppercase tracking-tight text-text-primary">
+                  {categoryParam 
+                    ? `Блюда: ${CATEGORIES.find(c => c.id === categoryParam)?.label || categoryParam}` 
+                    : 'Лучшие рецепты'}
+                </h2>
+                {categoryParam && (
+                  <button 
+                    onClick={() => setSearchParams({ tab: 'Рецепты' })} 
+                    className="text-xs font-bold bg-bg-surface-light px-3 py-1 rounded-full text-text-muted hover:text-text-primary transition-colors cursor-pointer"
+                  >
+                    ✕ Сбросить
+                  </button>
+                )}
+              </div>
+              {!categoryParam && (
+                <Link to="/recipes/all" className="text-sm text-text-muted hover:text-text-primary underline underline-offset-4">
+                  Смотреть все
+                </Link>
+              )}
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
               {loading ? (
                 Array.from({ length: 6 }).map((_, i) => <RecipeCardSkeleton key={i} />)
-              ) : (
+              ) : filteredRecipes.length > 0 ? (
                 filteredRecipes.slice(0, 12).map((recipe) => {
                   const author = users.find(u => u.id === recipe.authorId) || MOCK_USERS.find(u => u.id === recipe.authorId);
                   if (!author) return null;
                   return <RecipeCard key={recipe.id} recipe={recipe} author={author} />;
                 })
+              ) : (
+                <div className="col-span-full py-12 text-center text-text-muted bg-bg-surface-light rounded-2xl border border-border-color">
+                  В этой категории пока нет рецептов. Будьте первым, кто добавит!
+                </div>
               )}
             </div>
           </section>

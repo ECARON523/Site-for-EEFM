@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
-import { Search, Sparkles, ShoppingBasket, LogIn, LogOut, PlusCircle, User as UserIcon, X } from 'lucide-react';
+import { Search, Sparkles, ShoppingBasket, LogIn, LogOut, PlusCircle, User as UserIcon, X, Menu } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import { useRecipeStore } from '../store/useRecipeStore';
 import { cn } from '../lib/utils';
 import ThemeToggle from './ThemeToggle';
 
-export default function Header() {
+export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
   const { currentUser, logout } = useAuthStore();
   const { recipes } = useRecipeStore();
   const navigate = useNavigate();
@@ -51,12 +51,21 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-40 bg-bg-surface border-b border-border-color transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
-        {/* Logo */}
-        <Link to="/" className="flex items-center gap-2 shrink-0">
-          <div className="bg-primary text-black font-black text-lg sm:text-xl leading-none p-1.5 sm:p-2 rounded-lg flex flex-col items-center justify-center w-10 h-10 sm:w-12 sm:h-12">
-            <span>CIVS</span>
-          </div>
-        </Link>
+        
+        {/* Обертка для бургера и логотипа */}
+        <div className="flex items-center gap-2">
+          {/* Кнопка бургера (только для мобилок) */}
+          <button onClick={onMenuClick} className="lg:hidden p-2 -ml-2 text-text-muted hover:text-text-primary">
+            <Menu className="w-6 h-6" />
+          </button>
+
+          {/* Logo */}
+          <Link to="/" className="flex items-center gap-2 shrink-0">
+            <div className="bg-primary text-black font-black text-lg sm:text-xl leading-none p-1.5 sm:p-2 rounded-lg flex flex-col items-center justify-center w-10 h-10 sm:w-12 sm:h-12">
+              <span>CIVS</span>
+            </div>
+          </Link>
+        </div>
 
         {/* Add Recipe Button */}
         <button 
