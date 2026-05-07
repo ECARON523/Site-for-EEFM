@@ -1,4 +1,6 @@
-export type Role = 'user' | 'admin';
+export type Role = 'user' | 'admin' | 'vip' | 'kitchen';
+
+export type Department = 'Горячий цех' | 'Холодный цех' | 'Бар' | 'Десерты';
 
 export interface Collection {
   id: string;
@@ -36,9 +38,9 @@ export interface Ingredient {
   name: string;
   amount: number;
   unit: string;
-  weightGrams?: number; // Optional exact weight in grams for display like "1 кочан = 100 г"
+  weightGrams?: number; 
   imageUrl?: string;
-  category?: string; // e.g., 'Для салата', 'Для заправки'
+  category?: string; 
 }
 
 export interface NutritionalInfo {
@@ -63,8 +65,9 @@ export interface Recipe {
   description: string;
   imageUrl: string;
   category: RecipeCategory;
-  prepTime: number; // in minutes
-  cookTime: number; // in minutes
+  department?: Department; 
+  prepTime: number; 
+  cookTime: number; 
   difficulty: 1 | 2 | 3 | 4 | 5;
   spiciness?: 1 | 2 | 3 | 4 | 5;
   cuisine?: string;
@@ -78,4 +81,25 @@ export interface Recipe {
   views: number;
   likesCount?: number;
   createdAt: string;
+  price?: number; 
+}
+
+export type OrderStatus = 'pending' | 'cooking' | 'ready' | 'archived';
+
+export interface OrderItem {
+  recipeId: string;
+  title: string;
+  quantity: number;
+  department?: Department; 
+}
+
+export interface Order {
+  id: string;
+  userId: string;
+  userName: string;
+  isVip: boolean;
+  items: OrderItem[];
+  status: OrderStatus;
+  totalPrice: number;
+  createdAt: string; 
 }

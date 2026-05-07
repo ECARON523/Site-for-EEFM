@@ -47,10 +47,10 @@ export default function AllRecipes() {
     <div className="max-w-6xl mx-auto pb-20">
       <div className="mb-10 text-center">
         <h1 className="text-4xl font-black uppercase tracking-tight text-text-primary mb-4">
-          Все рецепты
+          Все позиции меню
         </h1>
         <p className="text-text-muted max-w-2xl mx-auto">
-          Откройте для себя нашу полную коллекцию вкусных и проверенных рецептов от нашего сообщества.
+          Откройте для себя наш полный ассортимент вкусных блюд. Добавляйте в корзину и наслаждайтесь!
         </p>
       </div>
 
@@ -108,7 +108,7 @@ export default function AllRecipes() {
         </>
       ) : (
         <div className="text-center py-20 bg-bg-surface rounded-3xl border border-border-color">
-          <p className="text-text-muted">Рецепты пока не добавлены.</p>
+          <p className="text-text-muted">Меню пока пусто.</p>
         </div>
       )}
     </div>

@@ -1,8 +1,8 @@
 import { create } from 'zustand';
-import { User } from '../types';
+import { User, Role } from '../types'; // ИМПОРТИРУЕМ Role
 import { MOCK_USERS } from '../data/mockData';
 import { db, handleFirestoreError, OperationType } from '../lib/firebase';
-import { collection, doc, onSnapshot, query, updateDoc } from 'firebase/firestore';
+import { collection, doc, onSnapshot, query } from 'firebase/firestore';
 
 interface UserState {
   users: User[];
@@ -14,7 +14,8 @@ interface UserState {
   toggleSaveRecipe: (currentUserId: string, recipeId: string) => Promise<void>;
   togglePinRecipe: (currentUserId: string, recipeId: string) => Promise<void>;
   updateProfile: (currentUserId: string, updates: Partial<Pick<User, 'name' | 'avatar' | 'bio'>>) => Promise<void>;
-  updateUserRole: (userId: string, newRole: 'user' | 'admin') => Promise<void>;
+  // ОБНОВИЛИ ТИП ДО Role (теперь 4 варианта)
+  updateUserRole: (userId: string, newRole: Role) => Promise<void>; 
 }
 
 export const useUserStore = create<UserState>((set, get) => ({
@@ -98,7 +99,6 @@ export const useUserStore = create<UserState>((set, get) => ({
         likedRecipeIds: updatedLikedRecipeIds
       }, { merge: true });
       
-      // Update recipe likes count
       const { useRecipeStore } = await import('./useRecipeStore');
       await useRecipeStore.getState().toggleLike(recipeId, !isLiked);
     } catch (error) {
