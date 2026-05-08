@@ -3,150 +3,197 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import { useUserStore } from '../store/useUserStore';
 import { useRecipes } from '../hooks/useRecipes';
+import { useOrderStore } from '../store/useOrderStore'; // Подключаем стор заказов
 import RecipeCard from '../components/RecipeCard';
-import { RecipeCategory } from '../types';
 import { AdminEditModal } from '../components/AdminEditModal';
 import { RecipeCardSkeleton } from '../components/Skeleton';
 import { MOCK_USERS } from '../data/mockData';
 import KitchenDashboard from '../components/KitchenDashboard';
+import { Clock, ChefHat, CheckCircle2 } from 'lucide-react';
+import { cn } from '../lib/utils';
 
-const CATEGORIES: { id: string; label: RecipeCategory; image: string; keywords: string[] }[] = [
-  { 
-    id: 'breakfast', 
-    label: 'Завтрак', 
-    image: 'https://avatars.mds.yandex.net/i?id=d062c59f18da50d4235819d5c01b69c1_l-10744014-images-thumbs&n=13',
-    keywords: ['завтрак', 'сырник', 'блин', 'каша', 'омлет', 'яичниц', 'мюсли', 'панкейк']
-  },
-  { 
-    id: 'lunch', 
-    label: 'Обед', 
-    image: 'https://avatars.mds.yandex.net/i?id=5fee187abb88ea4a11ec6d812c7ac38c_l-4477535-images-thumbs&n=13',
-    keywords: ['обед', 'суп', 'борщ', 'щи', 'горячее', 'второе', 'жарко', 'бульон']
-  },
-  { 
-    id: 'dinner', 
-    label: 'Ужин', 
-    image: 'https://www.koolinar.ru/all_image/article/5/5342/article-9f042aae-a14d-4c98-8e2d-09bb4aa03ff3_large.jpg',
-    keywords: ['ужин', 'мясо', 'рыба', 'куриц', 'запеканк', 'паста', 'спагетти', 'стейк']
-  },
-  { 
-    id: 'healthy', 
-    label: 'Здоровая еда', 
-    image: 'https://lnr-news.ru/img/20260225/37fd4d3da3aff77ef48d0678433cfadb.jpg',
-    keywords: ['здоров', 'пп', 'полезн', 'диетич', 'без сахара', 'веган', 'вегетариан', 'фитнес']
-  },
-  { 
-    id: 'snacks', 
-    label: 'Закуски', 
-    image: 'https://i.ytimg.com/vi/zlKdkGV4WAo/maxresdefault.jpg',
-    keywords: ['закуск', 'бутерброд', 'канапе', 'тост', 'рулет', 'тарталетк', 'чипс', 'снек']
-  },
-  { 
-    id: 'desserts', 
-    label: 'Десерты', 
-    image: 'https://avatars.mds.yandex.net/i?id=c14b9168ab27382c43189b759ed15f75be2442f9-5100742-images-thumbs&n=13',
-    keywords: ['десерт', 'торт', 'пирожн', 'морожен', 'сладк', 'крем', 'пудинг', 'желе']
-  },
+const DEPARTMENTS = [
+  { id: 'hot', label: 'Горячий цех', image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&q=80' },
+  { id: 'cold', label: 'Холодный цех', image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&q=80' },
+  { id: 'desserts', label: 'Десерты', image: 'https://images.unsplash.com/photo-1551024506-0cb4a1cb1cdd?auto=format&fit=crop&q=80' },
+  { id: 'bar', label: 'Бар', image: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&q=80' }
 ];
 
 export default function Home() {
   const { currentUser } = useAuthStore();
   const { users } = useUserStore();
   const { recipes, loading } = useRecipes();
+  const { orders } = useOrderStore(); // Достаем заказы
   
   const [searchParams, setSearchParams] = useSearchParams();
-  const categoryParam = searchParams.get('category'); 
+  const departmentParam = searchParams.get('department'); 
   
   const [editModal, setEditModal] = useState<{isOpen: boolean; title: string; fields: any[]; onSave: (data: any) => void} | null>(null);
-  
   const recipesGridRef = useRef<HTMLDivElement>(null);
 
   const approvedRecipes = recipes.filter(r => r.status === 'approved');
 
   const filteredRecipes = approvedRecipes.filter(r => {
-    if (categoryParam) {
-      const targetCategory = CATEGORIES.find(c => c.id === categoryParam);
-      if (targetCategory) {
-        const exactMatch = r.category === targetCategory.label;
-        const keywordMatch = targetCategory.keywords.some(kw => {
-          const lowerKw = kw.toLowerCase();
-          return r.title.toLowerCase().includes(lowerKw) || 
-                 r.description.toLowerCase().includes(lowerKw) || 
-                 r.category.toLowerCase().includes(lowerKw);
-        });
-
-        if (!exactMatch && !keywordMatch) return false;
-      }
-    }
-
-    return true;
+    if (!departmentParam) return true;
+    const targetDept = DEPARTMENTS.find(d => d.id === departmentParam);
+    return r.department === targetDept?.label;
   });
 
-  const handleEditSection = (
-    title: string, 
-    fields: { name: string; label: string; type: 'text' | 'number' | 'textarea'; value: any }[], 
-    onSave: (data: any) => void
-  ) => {
-    setEditModal({ isOpen: true, title, fields, onSave });
+  const handleCategoryClick = (deptId: string) => {
+    setSearchParams({ department: deptId });
+    setTimeout(() => {
+      recipesGridRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
   };
 
-  // Если это Кухня или Админ — показываем им доску заказов вместо рецептов
   if (currentUser?.role === 'admin' || currentUser?.role === 'kitchen') {
     return <KitchenDashboard />;
   }
 
+  // --- ЛОГИКА ТРЕКЕРА ЗАКАЗОВ ДЛЯ КЛИЕНТА ---
+  // Находим все активные заказы клиента (кроме архивированных)
+  const activeUserOrders = currentUser 
+    ? orders.filter(o => o.userId === currentUser.id && o.status !== 'archived')
+    : [];
+
   return (
-    <div className="space-y-12">
-      <section ref={recipesGridRef} className="scroll-mt-24 pt-4">
+    <div className="space-y-12 pb-20">
+      
+      {/* КРАСИВЫЙ ТРЕКЕР АКТИВНОГО ЗАКАЗА */}
+      {activeUserOrders.length > 0 && (
+        <section className="pt-4">
+          {activeUserOrders.map(order => {
+            // Определяем текущий шаг для шкалы прогресса
+            const stepIndex = order.status === 'pending' ? 0 : order.status === 'cooking' ? 1 : 2;
+
+            return (
+              <div key={order.id} className="bg-bg-surface border-2 border-primary/30 rounded-3xl p-6 sm:p-8 shadow-[0_0_40px_rgba(250,204,21,0.05)] relative overflow-hidden mb-6">
+                
+                {/* Подсветка фона в зависимости от статуса */}
+                <div className={cn(
+                  "absolute top-0 right-0 w-64 h-64 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4 pointer-events-none opacity-20",
+                  order.status === 'pending' ? "bg-yellow-500" : order.status === 'cooking' ? "bg-blue-500" : "bg-green-500"
+                )}></div>
+
+                <div className="relative z-10 flex flex-col md:flex-row gap-8 justify-between items-start md:items-center">
+                  
+                  {/* Инфо заказа */}
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <h2 className="text-2xl font-black uppercase tracking-tight text-text-primary">
+                        Заказ #{order.id.split('-')[1].toUpperCase()}
+                      </h2>
+                      <span className="text-sm font-bold text-text-muted flex items-center gap-1 bg-bg-surface-light px-2.5 py-1 rounded-lg">
+                        <Clock className="w-3.5 h-3.5" />
+                        {new Date(order.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                      </span>
+                    </div>
+                    <p className="text-text-muted font-medium mb-6">
+                      Блюд: {order.items.reduce((acc, item) => acc + item.quantity, 0)} шт. • Сумма: <span className="text-text-primary font-bold">{order.totalPrice} ₽</span>
+                    </p>
+
+                    {/* Прогресс-бар статуса */}
+                    <div className="relative flex justify-between w-full max-w-md">
+                      {/* Линия фона */}
+                      <div className="absolute top-1/2 left-0 w-full h-1 bg-bg-surface-light -translate-y-1/2 z-0 rounded-full"></div>
+                      
+                      {/* Заполненная линия */}
+                      <div className="absolute top-1/2 left-0 h-1 bg-primary -translate-y-1/2 z-0 rounded-full transition-all duration-500" 
+                           style={{ width: stepIndex === 0 ? '0%' : stepIndex === 1 ? '50%' : '100%' }}></div>
+
+                      {/* Шаг 1: Принят */}
+                      <div className="relative z-10 flex flex-col items-center gap-2">
+                        <div className={cn("w-10 h-10 rounded-full flex items-center justify-center transition-colors shadow-sm", stepIndex >= 0 ? "bg-primary text-black" : "bg-bg-surface-light text-text-muted")}>
+                          <Clock className="w-5 h-5" />
+                        </div>
+                        <span className={cn("text-xs font-bold uppercase tracking-wider", stepIndex >= 0 ? "text-text-primary" : "text-text-muted")}>Принят</span>
+                      </div>
+
+                      {/* Шаг 2: Готовится */}
+                      <div className="relative z-10 flex flex-col items-center gap-2">
+                        <div className={cn("w-10 h-10 rounded-full flex items-center justify-center transition-colors shadow-sm", stepIndex >= 1 ? "bg-primary text-black" : "bg-bg-surface-light text-text-muted")}>
+                          <ChefHat className="w-5 h-5" />
+                        </div>
+                        <span className={cn("text-xs font-bold uppercase tracking-wider", stepIndex >= 1 ? "text-text-primary" : "text-text-muted")}>Готовится</span>
+                      </div>
+
+                      {/* Шаг 3: Готов */}
+                      <div className="relative z-10 flex flex-col items-center gap-2">
+                        <div className={cn("w-10 h-10 rounded-full flex items-center justify-center transition-colors shadow-sm", stepIndex >= 2 ? "bg-green-500 text-white" : "bg-bg-surface-light text-text-muted")}>
+                          <CheckCircle2 className="w-5 h-5" />
+                        </div>
+                        <span className={cn("text-xs font-bold uppercase tracking-wider", stepIndex >= 2 ? "text-green-500" : "text-text-muted")}>К выдаче</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Кнопка "В профиль" */}
+                  <div className="shrink-0 w-full md:w-auto">
+                    {order.status === 'ready' ? (
+                      <div className="bg-green-500/20 text-green-500 border border-green-500/30 px-6 py-4 rounded-2xl text-center">
+                        <p className="font-black uppercase text-lg mb-1">Заказ готов!</p>
+                        <p className="text-sm font-medium">Подойдите на кассу</p>
+                      </div>
+                    ) : (
+                      <Link to={`/profile/${currentUser.id}`} className="block w-full md:w-auto text-center bg-bg-surface-light hover:bg-border-color border border-border-color text-text-primary font-bold px-6 py-4 rounded-2xl transition-colors">
+                        Детали в профиле
+                      </Link>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </section>
+      )}
+
+      {/* Сетка Цехов */}
+      <section className={activeUserOrders.length === 0 ? "pt-4" : ""}>
+        <h2 className="text-2xl font-black uppercase tracking-tight text-text-primary mb-6">Категории меню</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {DEPARTMENTS.map((dept) => (
+            <div 
+              key={dept.id} 
+              onClick={() => handleCategoryClick(dept.id)}
+              className="relative rounded-2xl overflow-hidden aspect-square sm:aspect-[4/3] group cursor-pointer border border-border-color"
+            >
+              <img src={dept.image} alt={dept.label} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+              <div className="absolute bottom-4 left-4 right-4 text-white font-black text-lg sm:text-xl uppercase tracking-wider leading-tight">{dept.label}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Меню (Сетка карточек) */}
+      <section ref={recipesGridRef} className="scroll-mt-24">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">
             <h2 className="text-2xl font-black uppercase tracking-tight text-text-primary">
-              {categoryParam 
-                ? `Блюда: ${CATEGORIES.find(c => c.id === categoryParam)?.label || categoryParam}` 
-                : 'Меню'}
+              {departmentParam ? `${DEPARTMENTS.find(d => d.id === departmentParam)?.label || 'Меню'}` : 'Все позиции'}
             </h2>
-            {categoryParam && (
-              <button 
-                onClick={() => setSearchParams({})} 
-                className="text-xs font-bold bg-bg-surface-light px-3 py-1 rounded-full text-text-muted hover:text-text-primary transition-colors cursor-pointer"
-              >
-                ✕ Сбросить
-              </button>
+            {departmentParam && (
+              <button onClick={() => setSearchParams({})} className="text-xs font-bold bg-bg-surface-light px-3 py-1 rounded-full text-text-muted hover:text-text-primary transition-colors cursor-pointer">✕ Сбросить</button>
             )}
           </div>
-          {!categoryParam && (
-            <Link to="/recipes/all" className="text-sm text-text-muted hover:text-text-primary underline underline-offset-4">
-              Смотреть все
-            </Link>
-          )}
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {loading ? (
             Array.from({ length: 6 }).map((_, i) => <RecipeCardSkeleton key={i} />)
           ) : filteredRecipes.length > 0 ? (
-            filteredRecipes.slice(0, 12).map((recipe) => {
-              const author = users.find(u => u.id === recipe.authorId) || MOCK_USERS.find(u => u.id === recipe.authorId);
-              if (!author) return null;
-              return <RecipeCard key={recipe.id} recipe={recipe} author={author} />;
-            })
+            filteredRecipes.slice(0, 12).map((recipe) => (
+              <RecipeCard key={recipe.id} recipe={recipe} />
+            ))
           ) : (
-            <div className="col-span-full py-12 text-center text-text-muted bg-bg-surface-light rounded-2xl border border-border-color">
-              В этой категории пока пусто.
+            <div className="col-span-full py-16 text-center text-text-muted bg-bg-surface-light rounded-3xl border border-border-color">
+              <div className="text-xl font-bold mb-2">В этом цеху пока пусто</div>
             </div>
           )}
         </div>
       </section>
 
-      {editModal && (
-        <AdminEditModal
-          isOpen={editModal.isOpen}
-          onClose={() => setEditModal(null)}
-          title={editModal.title}
-          fields={editModal.fields}
-          onSave={editModal.onSave}
-        />
-      )}
+      {editModal && <AdminEditModal isOpen={editModal.isOpen} onClose={() => setEditModal(null)} title={editModal.title} fields={editModal.fields} onSave={editModal.onSave} />}
     </div>
   );
 }

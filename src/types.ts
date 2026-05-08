@@ -84,13 +84,19 @@ export interface Recipe {
   price?: number; 
 }
 
+// === ТИПЫ ДЛЯ СИСТЕМЫ ЗАКАЗОВ (KDS) ===
+
 export type OrderStatus = 'pending' | 'cooking' | 'ready' | 'archived';
+
+// Статус для каждого конкретного блюда внутри чека
+export type ItemStatus = 'pending' | 'cooking' | 'ready'; 
 
 export interface OrderItem {
   recipeId: string;
   title: string;
   quantity: number;
   department?: Department; 
+  status: ItemStatus; // <--- Важное поле для галочек повара
 }
 
 export interface Order {

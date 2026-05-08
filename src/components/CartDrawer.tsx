@@ -1,8 +1,9 @@
-import { X, Minus, Plus, ShoppingBag, Trash2 } from 'lucide-react';
+import { X, Minus, Plus, ShoppingBag, Trash2, LogIn } from 'lucide-react';
 import { useCartStore } from '../store/useCartStore';
 import { useNotificationStore } from '../store/useNotificationStore';
 import { useAuthStore } from '../store/useAuthStore';
 import { useOrderStore } from '../store/useOrderStore';
+import { useNavigate } from 'react-router-dom'; // Импортируем навигацию
 import { cn } from '../lib/utils';
 
 interface CartDrawerProps {
@@ -14,22 +15,23 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   const { items, updateQuantity, removeItem, clearCart, getTotalPrice } = useCartStore();
   const { addNotification } = useNotificationStore();
   const { currentUser } = useAuthStore();
-  const { createOrder } = useOrderStore(); // Подключили хранилище заказов
+  const { createOrder } = useOrderStore();
+  const navigate = useNavigate(); // Для перенаправления на логин
 
   const handleCheckout = () => {
+    // Двойная защита
     if (!currentUser) {
-      addNotification('Пожалуйста, войдите в аккаунт для оформления заказа', 'error');
+      addNotification('Пожалуйста, войдите в аккаунт', 'error');
       return;
     }
 
-    // Создаем реальный заказ!
     createOrder({
       userId: currentUser.id,
       userName: currentUser.name || 'Гость',
       isVip: currentUser.role === 'vip',
       totalPrice: getTotalPrice(),
       items: items.map(item => ({
-        recipeId: item.id, // НАСТОЯЩИЙ ID БЛЮДА
+        recipeId: item.id,
         title: item.title,
         quantity: item.quantity,
         department: item.department
@@ -39,6 +41,11 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
     addNotification('Заказ успешно отправлен на кухню!', 'success');
     clearCart();
     onClose();
+  };
+
+  const handleLoginRedirect = () => {
+    onClose();
+    navigate('/login');
   };
 
   return (
@@ -88,9 +95,17 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
               <span className="text-text-muted font-medium">Итого к оплате</span>
               <span className="text-2xl font-black text-text-primary">{getTotalPrice()} ₽</span>
             </div>
-            <button onClick={handleCheckout} className="w-full bg-primary hover:bg-primary-hover text-black font-black py-4 rounded-xl transition-transform active:scale-[0.98] text-lg shadow-lg shadow-primary/20">
-              Оформить заказ
-            </button>
+            
+            {/* ЛОГИКА КНОПКИ ЗАКАЗА */}
+            {currentUser ? (
+              <button onClick={handleCheckout} className="w-full bg-primary hover:bg-primary-hover text-black font-black py-4 rounded-xl transition-transform active:scale-[0.98] text-lg shadow-lg shadow-primary/20">
+                Оформить заказ
+              </button>
+            ) : (
+              <button onClick={handleLoginRedirect} className="w-full bg-bg-surface-light border-2 border-border-color hover:border-primary hover:text-primary text-text-primary font-black py-4 rounded-xl transition-all active:scale-[0.98] text-lg flex items-center justify-center gap-2">
+                <LogIn className="w-5 h-5" /> Войти для заказа
+              </button>
+            )}
           </div>
         )}
       </div>
