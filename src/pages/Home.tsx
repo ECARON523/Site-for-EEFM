@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import { useUserStore } from '../store/useUserStore';
 import { useRecipes } from '../hooks/useRecipes';
-import { useOrderStore } from '../store/useOrderStore'; // Подключаем стор заказов
+import { useOrderStore } from '../store/useOrderStore';
 import RecipeCard from '../components/RecipeCard';
 import { AdminEditModal } from '../components/AdminEditModal';
 import { RecipeCardSkeleton } from '../components/Skeleton';
@@ -23,7 +23,8 @@ export default function Home() {
   const { currentUser } = useAuthStore();
   const { users } = useUserStore();
   const { recipes, loading } = useRecipes();
-  const { orders } = useOrderStore(); // Достаем заказы
+  // БРОНЯ: Убеждаемся, что orders всегда массив, даже если стор глюканет
+  const orders = useOrderStore(state => state.orders) || []; 
   
   const [searchParams, setSearchParams] = useSearchParams();
   const departmentParam = searchParams.get('department'); 
@@ -31,12 +32,14 @@ export default function Home() {
   const [editModal, setEditModal] = useState<{isOpen: boolean; title: string; fields: any[]; onSave: (data: any) => void} | null>(null);
   const recipesGridRef = useRef<HTMLDivElement>(null);
 
-  const approvedRecipes = recipes.filter(r => r.status === 'approved');
+  // БРОНЯ: Защита от undefined в recipes
+  const safeRecipes = recipes || [];
+  const approvedRecipes = safeRecipes.filter(r => r?.status === 'approved');
 
   const filteredRecipes = approvedRecipes.filter(r => {
     if (!departmentParam) return true;
     const targetDept = DEPARTMENTS.find(d => d.id === departmentParam);
-    return r.department === targetDept?.label;
+    return r?.department === targetDept?.label;
   });
 
   const handleCategoryClick = (deptId: string) => {
@@ -50,26 +53,25 @@ export default function Home() {
     return <KitchenDashboard />;
   }
 
-  // --- ЛОГИКА ТРЕКЕРА ЗАКАЗОВ ДЛЯ КЛИЕНТА ---
-  // Находим все активные заказы клиента (кроме архивированных)
+  // БРОНЯ: Безопасный фильтр активных заказов
   const activeUserOrders = currentUser 
-    ? orders.filter(o => o.userId === currentUser.id && o.status !== 'archived')
+    ? orders.filter(o => o?.userId === currentUser.id && o?.status !== 'archived')
     : [];
 
   return (
     <div className="space-y-12 pb-20">
       
-      {/* КРАСИВЫЙ ТРЕКЕР АКТИВНОГО ЗАКАЗА */}
       {activeUserOrders.length > 0 && (
         <section className="pt-4">
           {activeUserOrders.map(order => {
-            // Определяем текущий шаг для шкалы прогресса
+            if (!order) return null; // Защита от битого заказа
+            
             const stepIndex = order.status === 'pending' ? 0 : order.status === 'cooking' ? 1 : 2;
+            const safeItems = order.items || []; // БРОНЯ: Если items пустой
 
             return (
-              <div key={order.id} className="bg-bg-surface border-2 border-primary/30 rounded-3xl p-6 sm:p-8 shadow-[0_0_40px_rgba(250,204,21,0.05)] relative overflow-hidden mb-6">
+              <div key={order.id || Math.random()} className="bg-bg-surface border-2 border-primary/30 rounded-3xl p-6 sm:p-8 shadow-[0_0_40px_rgba(250,204,21,0.05)] relative overflow-hidden mb-6">
                 
-                {/* Подсветка фона в зависимости от статуса */}
                 <div className={cn(
                   "absolute top-0 right-0 w-64 h-64 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4 pointer-events-none opacity-20",
                   order.status === 'pending' ? "bg-yellow-500" : order.status === 'cooking' ? "bg-blue-500" : "bg-green-500"
@@ -77,31 +79,27 @@ export default function Home() {
 
                 <div className="relative z-10 flex flex-col md:flex-row gap-8 justify-between items-start md:items-center">
                   
-                  {/* Инфо заказа */}
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
                       <h2 className="text-2xl font-black uppercase tracking-tight text-text-primary">
-                        Заказ #{order.id.split('-')[1].toUpperCase()}
+                        Заказ #{(order.id || 'err').split('-')[1]?.toUpperCase() || 'NEW'}
                       </h2>
                       <span className="text-sm font-bold text-text-muted flex items-center gap-1 bg-bg-surface-light px-2.5 py-1 rounded-lg">
                         <Clock className="w-3.5 h-3.5" />
-                        {new Date(order.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                        {order.createdAt ? new Date(order.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'Сейчас'}
                       </span>
                     </div>
+                    
+                    {/* БРОНЯ: Безопасный подсчет количества блюд */}
                     <p className="text-text-muted font-medium mb-6">
-                      Блюд: {order.items.reduce((acc, item) => acc + item.quantity, 0)} шт. • Сумма: <span className="text-text-primary font-bold">{order.totalPrice} ₽</span>
+                      Блюд: {safeItems.reduce((acc, item) => acc + (item?.quantity || 1), 0)} шт. • Сумма: <span className="text-text-primary font-bold">{order.totalPrice || 0} ₽</span>
                     </p>
 
-                    {/* Прогресс-бар статуса */}
                     <div className="relative flex justify-between w-full max-w-md">
-                      {/* Линия фона */}
                       <div className="absolute top-1/2 left-0 w-full h-1 bg-bg-surface-light -translate-y-1/2 z-0 rounded-full"></div>
-                      
-                      {/* Заполненная линия */}
                       <div className="absolute top-1/2 left-0 h-1 bg-primary -translate-y-1/2 z-0 rounded-full transition-all duration-500" 
                            style={{ width: stepIndex === 0 ? '0%' : stepIndex === 1 ? '50%' : '100%' }}></div>
 
-                      {/* Шаг 1: Принят */}
                       <div className="relative z-10 flex flex-col items-center gap-2">
                         <div className={cn("w-10 h-10 rounded-full flex items-center justify-center transition-colors shadow-sm", stepIndex >= 0 ? "bg-primary text-black" : "bg-bg-surface-light text-text-muted")}>
                           <Clock className="w-5 h-5" />
@@ -109,7 +107,6 @@ export default function Home() {
                         <span className={cn("text-xs font-bold uppercase tracking-wider", stepIndex >= 0 ? "text-text-primary" : "text-text-muted")}>Принят</span>
                       </div>
 
-                      {/* Шаг 2: Готовится */}
                       <div className="relative z-10 flex flex-col items-center gap-2">
                         <div className={cn("w-10 h-10 rounded-full flex items-center justify-center transition-colors shadow-sm", stepIndex >= 1 ? "bg-primary text-black" : "bg-bg-surface-light text-text-muted")}>
                           <ChefHat className="w-5 h-5" />
@@ -117,7 +114,6 @@ export default function Home() {
                         <span className={cn("text-xs font-bold uppercase tracking-wider", stepIndex >= 1 ? "text-text-primary" : "text-text-muted")}>Готовится</span>
                       </div>
 
-                      {/* Шаг 3: Готов */}
                       <div className="relative z-10 flex flex-col items-center gap-2">
                         <div className={cn("w-10 h-10 rounded-full flex items-center justify-center transition-colors shadow-sm", stepIndex >= 2 ? "bg-green-500 text-white" : "bg-bg-surface-light text-text-muted")}>
                           <CheckCircle2 className="w-5 h-5" />
@@ -127,7 +123,6 @@ export default function Home() {
                     </div>
                   </div>
 
-                  {/* Кнопка "В профиль" */}
                   <div className="shrink-0 w-full md:w-auto">
                     {order.status === 'ready' ? (
                       <div className="bg-green-500/20 text-green-500 border border-green-500/30 px-6 py-4 rounded-2xl text-center">
@@ -135,7 +130,7 @@ export default function Home() {
                         <p className="text-sm font-medium">Подойдите на кассу</p>
                       </div>
                     ) : (
-                      <Link to={`/profile/${currentUser.id}`} className="block w-full md:w-auto text-center bg-bg-surface-light hover:bg-border-color border border-border-color text-text-primary font-bold px-6 py-4 rounded-2xl transition-colors">
+                      <Link to={`/profile/${currentUser?.id || ''}`} className="block w-full md:w-auto text-center bg-bg-surface-light hover:bg-border-color border border-border-color text-text-primary font-bold px-6 py-4 rounded-2xl transition-colors">
                         Детали в профиле
                       </Link>
                     )}
@@ -147,7 +142,6 @@ export default function Home() {
         </section>
       )}
 
-      {/* Сетка Цехов */}
       <section className={activeUserOrders.length === 0 ? "pt-4" : ""}>
         <h2 className="text-2xl font-black uppercase tracking-tight text-text-primary mb-6">Категории меню</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -165,7 +159,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Меню (Сетка карточек) */}
       <section ref={recipesGridRef} className="scroll-mt-24">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">
@@ -183,7 +176,7 @@ export default function Home() {
             Array.from({ length: 6 }).map((_, i) => <RecipeCardSkeleton key={i} />)
           ) : filteredRecipes.length > 0 ? (
             filteredRecipes.slice(0, 12).map((recipe) => (
-              <RecipeCard key={recipe.id} recipe={recipe} />
+              recipe ? <RecipeCard key={recipe.id} recipe={recipe} /> : null
             ))
           ) : (
             <div className="col-span-full py-16 text-center text-text-muted bg-bg-surface-light rounded-3xl border border-border-color">
